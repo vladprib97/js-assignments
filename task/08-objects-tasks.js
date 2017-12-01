@@ -23,7 +23,7 @@
  *    console.log(r.getArea());   // => 200
  */
 function Rectangle(width, height) {
-    throw new Error('Not implemented');
+    return {width,height,getArea: () =>width*height};
 }
 
 
@@ -38,7 +38,7 @@ function Rectangle(width, height) {
  *    { width: 10, height : 20 } => '{"height":10,"width":20}'
  */
 function getJSON(obj) {
-    throw new Error('Not implemented');
+    return JSON.stringify(obj);
 }
 
 
@@ -54,7 +54,9 @@ function getJSON(obj) {
  *
  */
 function fromJSON(proto, json) {
-    throw new Error('Not implemented');
+    var o = JSON.parse(json);
+    Object.setPrototypeOf(o,Rectangle.prototype);
+    return o;
 }
 
 
@@ -105,35 +107,177 @@ function fromJSON(proto, json) {
  *
  *  For more examples see unit tests.
  */
+class Element {
+    constructor()
+    {
+        this._id = [];
+        this._element = [];
+        this._class = [];
+        this._attr = [];
+        this._pseudoClass = [];
+        this._pseudoElement = [];
+
+        //last element priority
+        this._last = -1;
+    }
+
+    stringify(){
+        let rez = "";
+        if(this._element.length !== 0)
+        {
+            rez += this._element.join('.');
+        }
+        if(this._id.length !== 0)
+        {
+            rez +='#'+this._id;
+        }
+        if(this._class.length !== 0)
+        {
+            rez +='.'+this._class.join('.');
+        }
+        if(this._attr.length !== 0)
+        {
+            rez +='['+this._attr+']';
+        }
+        if(this._pseudoClass.length !== 0)
+        {
+            rez +=':'+this._pseudoClass.join(':');
+        }
+        if(this._pseudoElement.length !== 0)
+        {
+            rez +='::'+this._pseudoElement;
+        }
+        return rez;
+    }
+
+    element(input) {
+        if(this._element.length === 1)
+            throw new ElementException(0);
+        if(this._last > 0)
+            throw new ElementException(1);
+        this._element.push(input);
+        this._last = 0;
+        return this;
+    }
+
+    id(input){
+        if(this._id.length === 1)
+            throw new ElementException(0);
+        if(this._last > 1)
+            throw new ElementException(1);
+        this._id.push(input);
+        this._last = 1;
+        return this;
+    }
+
+    class(input) {
+        if(this._last > 2)
+            throw new ElementException(1);
+        this._class.push(input);
+
+        this._last = 2;
+        return this;
+    }
+
+    attr(input) {
+        if(this._last > 3)
+            throw new ElementException(1);
+        this._attr.push(input);
+
+        this._last = 3;
+        return this;
+    }
+
+    pseudoClass(input) {
+        if(this._last > 4)
+            throw new ElementException(1);
+        this._pseudoClass.push(input);
+        this._last = 4;
+        return this;
+    }
+
+    pseudoElement(input) {
+        if(this._pseudoElement.length === 1)
+            throw new ElementException(0);
+        if(this._last > 5)
+            throw new ElementException(1);
+        this._pseudoElement.push(input);
+        this._last = 5;
+        return this;
+    }
+
+
+
+}
+
+class ComboElement
+{
+    constructor(){
+        this._elements = [];
+        this._combinators = [];
+    }
+
+    push(element,combinator){
+        this._elements.push(element);
+        this._combinators.push(combinator);
+        return this;
+    }
+
+    stringify() {
+        let rez = "";
+        for(let i=0;i<this._elements.length;i++)
+        {
+            rez += this._elements[i].stringify();
+            if(this._combinators[i] !== undefined)
+                rez += " " + this._combinators[i] + " ";
+        }
+        return rez;
+    }
+
+}
+
+class ElementException
+{
+    constructor(id)
+    {
+        switch(id)
+        {
+            case 0:
+                throw `Element, id and pseudo-element should not occur more then one time inside the selector`;
+            case 1:
+                throw  `/Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element/`;
+        }
+    }
+}
 
 const cssSelectorBuilder = {
 
     element: function(value) {
-        throw new Error('Not implemented');
+        return new Element().element(value);
     },
 
     id: function(value) {
-        throw new Error('Not implemented');
+        return new Element().id(value);
     },
 
     class: function(value) {
-        throw new Error('Not implemented');
+        return new Element().class(value);
     },
 
     attr: function(value) {
-        throw new Error('Not implemented');
+        return new Element().attr(value);
     },
 
     pseudoClass: function(value) {
-        throw new Error('Not implemented');
+        return new Element().pseudoClass(value);
     },
 
     pseudoElement: function(value) {
-        throw new Error('Not implemented');
+        return new Element().pseudoElement(value);
     },
 
     combine: function(selector1, combinator, selector2) {
-        throw new Error('Not implemented');
+        return new ComboElement().push(selector1,combinator).push(selector2);
     },
 };
 
